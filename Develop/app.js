@@ -9,7 +9,8 @@ const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./lib/htmlRenderer");
-
+const teamArray = []
+const teamId = []
 
 function askQuestions() {
     inquirer
@@ -35,8 +36,8 @@ function askQuestions() {
             }
         ])
         .then(
-            function({ name, id, email, role }) {
-                switch (role) {
+            function(answer) {
+                switch (answer.role) {
                     case "Engineer":
                         inquirer
                             .prompt({
@@ -44,9 +45,11 @@ function askQuestions() {
                                 message: "What is your GitHub username?",
                                 name: "github"
                             }).then(
-                                function({ github }) {
-                                    generateEngineer(name, id, email, github)
-                                    addOtherMembers()
+                                function(engineerAnswer) {
+                                   const engineer = new Engineer(answer.name, answer.id, answer.email, engineerAnswer.github)
+                                   teamArray.push(engineer)
+                                   teamId.push(answer.id)
+                                    addOtherMembers(teamArray)
                                 }
                             )
                         break
@@ -57,9 +60,11 @@ function askQuestions() {
                                 message: "What school do you attend?",
                                 name: "school"
                             }).then(
-                                function({ school }) {
-                                    generateIntern(name, id, email, school)
-                                    addOtherMembers()
+                                function(internAnswer) {
+                                    const intern = new Intern(answer.name, answer.id, answer.email, internAnswer.school)
+                                    teamArray.push(intern)
+                                    teamId.push(answer.id)
+                                    addOtherMembers(teamArray)
                                 }
                             )
                         break
@@ -70,9 +75,12 @@ function askQuestions() {
                                 message: "What is your Office Number?",
                                 name: "officeNumber"
                             }).then(
-                                function({ officeNumber }) {
-                                    generateManager(name, id, email, officeNumber)
-                                    addOtherMembers()
+                                function(managerAnswer) {
+                                    const manager = new Manager(answer.name, answer.id, answer.email, managerAnswer.officeNumber)
+                                    teamArray.push(manager)
+                                    teamId.push(answer.id)
+                                    console.log(teamArray)
+                                    addOtherMembers(teamArray)
                                 }
                             )
                         break
@@ -81,18 +89,18 @@ function askQuestions() {
 }
 
 
-function addOtherMembers() {
+function addOtherMembers(teamArray) {
     inquirer.prompt({
             type: "confirm",
             message: "Add other Team Members?",
             name: "addOtherMembers"
         }).then(
             function({ addOtherMembers }) {
-                console.log("add other members", addOtherMembers)
+                console.log("add other members", addOtherMembers, teamArray)
                 if (addOtherMembers) {
                     askQuestions()
                 } else {
-                    renderHTML()
+                    renderHTML(teamArray)
                 }
             }
         )
@@ -101,8 +109,19 @@ function addOtherMembers() {
             throw err
         })
 }
+function renderHTML(teamArray){
+    fs.writeFileSync(outputPath, render(teamArray), function(error){
+        if(error){
+            console.log(error)
+        }
+        else{
+            console.log('success')
+        }
+    })
 
+}
 
+askQuestions()
 
 
 // Write code to use inquirer to gather information about the development team members,
